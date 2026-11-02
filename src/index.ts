@@ -10,7 +10,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-tools'
-import { makeRoutes } from './routes.ts'
+import { makeRoutes, type PairingContext } from './routes.ts'
 import { notionTools } from './tools.ts'
 
 /** Stable cordis plugin name. */
@@ -41,7 +41,7 @@ export function apply(ctx: Context): void {
   // Settings routes.
   ctx.effect(
     () => {
-      const disposers = makeRoutes().map(route => ctx.webServer.register(route))
+      const disposers = makeRoutes(ctx as unknown as PairingContext).map(route => ctx.webServer.register(route))
       return () => {
         for (const dispose of disposers) dispose()
       }

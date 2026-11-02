@@ -14,7 +14,7 @@ DeepSeek Harness 的 Notion 连接插件。配置一次 Integration Token 后，
   - `notion_update_page` — 更新属性 / 归档
   - `notion_append_blocks` — 追加内容块
 - **Web 设置页**：设置 → Notion — 连接状态、Token 粘贴（保存时自动校验并读取工作区名）、清除配置、三步指引
-- **存储**：Token 存 `~/.dsh/notion.json`（权限 0600）；通过 loopback-only 的 `/api/dsh-notion-connector/*` 与浏览器半交互；API 调用走 Node 原生 fetch，无 shell 依赖
+- **存储**：Token 存 `~/.dsh/notion.json`（权限 0600）；浏览器通过 `/api/dsh-notion/*` 接口交互，接口允许本机请求及宿主配对服务认证通过的设备访问；API 调用走 Node 原生 fetch，无 shell 依赖
 
 ## 安装
 
