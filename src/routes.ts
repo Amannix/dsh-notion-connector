@@ -52,8 +52,12 @@ function isPairingAccess(value: unknown): value is PairingAccess {
 
 function isAllowedRequest(ctx: PairingContext, request: IncomingMessage): boolean {
   if (isLoopbackRequest(request)) return true
-  const service = typeof ctx.get === 'function' ? ctx.get('remoteWebUiPairing', false) : undefined
-  const pairing = isPairingAccess(service) ? service : ctx.remoteWebUiPairing
+  let pairing: unknown
+  if (typeof ctx.get === 'function') {
+    pairing = ctx.get('remoteWebUiPairing', false)
+  } else {
+    try { pairing = ctx.remoteWebUiPairing } catch { return false }
+  }
   return isPairingAccess(pairing) && pairing.isPairedDevice(request) === true
 }
 
