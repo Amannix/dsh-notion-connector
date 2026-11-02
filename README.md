@@ -14,7 +14,7 @@ A Notion connector plugin for DeepSeek Harness. Configure an Integration Token o
   - `notion_update_page` — update properties / archive
   - `notion_append_blocks` — append content blocks
 - **Web settings page**: Settings → Notion — connection status, Token input (automatically validated and the workspace name is read on save), clear configuration, three-step guide
-- **Storage**: the Token is stored in `~/.dsh/notion.json` (permissions 0600); the browser interacts with the plugin through the loopback-only `/api/dsh-notion-connector/*` endpoints; API calls use Node's native fetch, with no shell dependency
+- **Storage**: the Token is stored in `~/.dsh/notion.json` (permissions 0600); the browser interacts with the plugin through `/api/dsh-notion/*` endpoints, accessible locally or to devices authenticated by the host pairing service; API calls use Node's native fetch, with no shell dependency
 
 ## Installation
 

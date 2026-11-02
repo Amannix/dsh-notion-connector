@@ -1,9 +1,8 @@
 /**
  * The /api/dsh-notion route family: connection status, token save (validates
  * against /v1/users/me before persisting), and token clear. Every route
- * carries a loopback-only trust fence (plus browser same-origin markers) —
- * these endpoints write credentials, so LAN-exposed dsh web deployments must
- * not serve them.
+ * permits local same-origin requests and devices authenticated by the host
+ * pairing service. These endpoints write credentials.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
@@ -37,6 +36,25 @@ function isLoopbackRequest(request: IncomingMessage): boolean {
   } catch {
     return false
   }
+}
+
+/** Optional host service used to authenticate remote web UI devices. */
+type PairingAccess = { isPairedDevice(request: IncomingMessage): boolean }
+export type PairingContext = {
+  get?: (name: string, required: false) => unknown
+  remoteWebUiPairing?: unknown
+}
+
+function isPairingAccess(value: unknown): value is PairingAccess {
+  return value !== null && typeof value === 'object'
+    && typeof (value as PairingAccess).isPairedDevice === 'function'
+}
+
+function isAllowedRequest(ctx: PairingContext, request: IncomingMessage): boolean {
+  if (isLoopbackRequest(request)) return true
+  const service = typeof ctx.get === 'function' ? ctx.get('remoteWebUiPairing', false) : undefined
+  const pairing = isPairingAccess(service) ? service : ctx.remoteWebUiPairing
+  return isPairingAccess(pairing) && pairing.isPairedDevice(request) === true
 }
 
 /** Write one JSON response. */
@@ -75,14 +93,14 @@ function readJsonBody(request: IncomingMessage): Promise<any> {
 }
 
 /** The Notion settings route family. */
-export function makeRoutes(): WebRoute[] {
+export function makeRoutes(ctx: PairingContext): WebRoute[] {
   return [
     {
       kind: 'exact',
       path: `${NOTION_API_PREFIX}/status`,
       handler: async (req, res) => {
-        if (req.method !== 'GET' || !isLoopbackRequest(req)) {
-          writeJson(res, 403, { error: 'forbidden: loopback-only' })
+        if (req.method !== 'GET' || !isAllowedRequest(ctx, req)) {
+          writeJson(res, 403, { error: 'forbidden' })
           return
         }
         const cfg = readConfig()
@@ -97,8 +115,8 @@ export function makeRoutes(): WebRoute[] {
       kind: 'exact',
       path: `${NOTION_API_PREFIX}/token`,
       handler: async (req, res) => {
-        if (req.method !== 'POST' || !isLoopbackRequest(req)) {
-          writeJson(res, 403, { error: 'forbidden: loopback-only' })
+        if (req.method !== 'POST' || !isAllowedRequest(ctx, req)) {
+          writeJson(res, 403, { error: 'forbidden' })
           return
         }
         let body: any
@@ -133,8 +151,8 @@ export function makeRoutes(): WebRoute[] {
       kind: 'exact',
       path: `${NOTION_API_PREFIX}/clear`,
       handler: async (req, res) => {
-        if (req.method !== 'POST' || !isLoopbackRequest(req)) {
-          writeJson(res, 403, { error: 'forbidden: loopback-only' })
+        if (req.method !== 'POST' || !isAllowedRequest(ctx, req)) {
+          writeJson(res, 403, { error: 'forbidden' })
           return
         }
         clearConfig()

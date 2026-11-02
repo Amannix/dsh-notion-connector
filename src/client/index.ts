@@ -2,7 +2,7 @@
  * Browser-half entry for the dsh-notion plugin — runs inside the dsh web GUI.
  *
  * Registers the Notion connection page into the additive `settings.section`
- * list slot (nav label "Notion"). All data flows through the loopback-fenced
+ * list slot (nav label "Notion"). All data flows through the access-controlled
  * /api/dsh-notion routes on the host.
  *
  * Export discipline (packages/client rule): the /client surface carries what
