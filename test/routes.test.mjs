@@ -31,7 +31,7 @@ test('all routes reject unpaired remote requests and accept paired requests', as
 })
 
 test('paired service is optional, resolved per request, and supports the context property fallback', async () => {
-  const ctx = { get: () => false, remoteWebUiPairing: { isPairedDevice: req => req.headers.cookie === 'paired' } }
+  const ctx = { remoteWebUiPairing: { isPairedDevice: req => req.headers.cookie === 'paired' } }
   assert.equal((await call(ctx, 'status')).status, 403)
   assert.equal((await call(ctx, 'status', { headers: { cookie: 'paired' } })).status, 200)
   assert.equal((await call({ get: () => ({}) }, 'status')).status, 403)
@@ -63,4 +63,17 @@ test('paired device can save, inspect and clear a token', async () => {
     assert.equal((await call(ctx, 'clear')).response.ok, true)
     assert.equal((await call(ctx, 'status')).response.configured, false)
   } finally { globalThis.fetch = originalFetch }
+})
+
+
+test('missing optional service does not access an injected-only context property', async () => {
+  const ctx = {
+    get: () => undefined,
+    get remoteWebUiPairing() { throw new Error('cannot access without inject') },
+  }
+  for (const path of ['status', 'token', 'clear']) {
+    assert.equal((await call(ctx, path)).status, 403)
+  }
+  const propertyOnly = { get remoteWebUiPairing() { throw new Error('unavailable') } }
+  assert.equal((await call(propertyOnly, 'status')).status, 403)
 })
