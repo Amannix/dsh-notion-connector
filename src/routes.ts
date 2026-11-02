@@ -52,6 +52,13 @@ function isPairingAccess(value: unknown): value is PairingAccess {
 
 function isAllowedRequest(ctx: PairingContext, request: IncomingMessage): boolean {
   if (isLoopbackRequest(request)) return true
+  // Reuse the host's full Host/Origin and browser-session admission check.
+  const connection = typeof ctx.get === 'function' ? ctx.get('connection', false) : undefined
+  if (connection !== null && typeof connection === 'object'
+    && typeof (connection as { requestRejection?: unknown }).requestRejection === 'function') {
+    const guard = connection as { requestRejection(request: IncomingMessage): unknown }
+    if (guard.requestRejection(request) === undefined) return true
+  }
   let pairing: unknown
   if (typeof ctx.get === 'function') {
     pairing = ctx.get('remoteWebUiPairing', false)
